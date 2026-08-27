@@ -1,0 +1,119 @@
+{
+  "id": "deploy-first-prompt-flow-azure-ai-foundry",
+  "schema": "hol-lab@1",
+  "title": "Deploy Your First Prompt Flow in Azure AI Foundry",
+  "domain": "azure-ai-foundry",
+  "difficulty": "beginner",
+  "estimatedMinutes": 40,
+  "problemStatement": "Teams shipping a customer-support bot need to iterate on prompt wording, test variants, and compare outputs before committing changes to production — doing this by editing raw strings in application code means every tweak requires a full redeploy and there's no structured way to compare two prompt versions side by side.",
+  "approachRationale": "A raw prompt string embedded in application code would technically work, but it loses versioning, can't be A/B tested without custom tooling, and mixes prompt-engineering concerns with application logic. Azure AI Foundry's Prompt Flow gives you a visual, versioned flow with built-in variant comparison — the same underlying model call, but with iteration and evaluation built in rather than bolted on.",
+  "prerequisites": [
+    "An Azure account with an active subscription (the free account's $200 starting credit fully covers this lab)",
+    "Access to an Azure AI Foundry project (create one at ai.azure.com if you don't have one)",
+    "Azure CLI 2.60+ installed and authenticated (`az login`)"
+  ],
+  "learningObjectives": [
+    "Create a Prompt Flow inside an Azure AI Foundry project",
+    "Wire a single LLM node to a deployed chat model",
+    "Add a second prompt variant and compare outputs side by side",
+    "Deploy the flow as a callable endpoint and invoke it from a Python client"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Open your Azure AI Foundry project",
+      "instructions": "Sign in at ai.azure.com and open (or create) a project. Note the project's endpoint URL from the Overview page — you'll need it in step 4.",
+      "whyItMatters": "A Foundry project is the scoping boundary for connected models, flows, and deployments — everything in this lab lives inside one project so cost and access can be managed together.",
+      "expectedResult": "The project Overview page loads and shows a non-empty Endpoint URL field."
+    },
+    {
+      "order": 2,
+      "title": "Create a new Prompt Flow",
+      "instructions": "In the left nav, select Prompt Flow → Create → Chat flow. Name it `support-bot-greeting`.",
+      "whyItMatters": "Chat flow (vs. a plain 'flow') pre-wires the conversation-history input, which is what you actually want for a support bot — starting from the right template avoids rebuilding that plumbing by hand.",
+      "expectedResult": "A new flow canvas opens with an `inputs`, an `llm` node, and an `outputs` node already connected."
+    },
+    {
+      "order": 3,
+      "title": "Connect the LLM node to a deployed chat model",
+      "instructions": "Click the `llm` node, and under Connection select an existing Azure OpenAI or Foundry model connection (create one under Management Center → Connections if none exists). Choose a small model such as gpt-4o-mini for this lab.",
+      "whyItMatters": "gpt-4o-mini keeps this lab in the free/low-cost tier — the concept (variant comparison) doesn't require a large model, and using a small one is the deliberate cost-conscious choice, not a limitation.",
+      "code": { "language": "text", "snippet": "Connection: <your-foundry-connection-name>\nDeployment: gpt-4o-mini\nTemperature: 0.7" },
+      "expectedResult": "The node shows a green connected indicator and the deployment name in its header."
+    },
+    {
+      "order": 4,
+      "title": "Write the base prompt",
+      "instructions": "In the llm node's prompt editor, write a system prompt for a support bot greeting, then click Run to test it against a sample chat_history input.",
+      "whyItMatters": "Testing one node in isolation before wiring the full flow catches prompt-formatting errors early — cheaper to fix here than after deployment.",
+      "code": { "language": "jinja2", "snippet": "system:\nYou are a concise, friendly support assistant for {{product_name}}. Greet the user in one sentence and ask what they need help with." },
+      "expectedResult": "The Run panel shows a one-sentence greeting output, no error banner."
+    },
+    {
+      "order": 5,
+      "title": "Add a second prompt variant",
+      "instructions": "Click the three-dot menu on the llm node → Show variants → Add variant. Change the system prompt's tone to be more formal, and name it `variant_1_formal`.",
+      "whyItMatters": "This is the actual point of Prompt Flow over raw code: two variants living side by side, both versioned, both runnable — this is what lets you make an evidence-based choice instead of guessing which wording is better.",
+      "expectedResult": "Two variant tabs are now visible on the node, each independently runnable."
+    },
+    {
+      "order": 6,
+      "title": "Run both variants and compare",
+      "instructions": "Click Evaluate → select both variants → Submit with the same sample input for each.",
+      "whyItMatters": "Running identical input through both variants isolates the prompt wording as the only variable — without that control, you can't attribute a difference in output to the prompt change specifically.",
+      "expectedResult": "A comparison table shows both variants' outputs side by side."
+    },
+    {
+      "order": 7,
+      "title": "Deploy the flow as an endpoint",
+      "instructions": "Click Deploy at the top of the flow canvas. Choose a small instance size (Standard_DS2_v2 or the smallest available) and confirm.",
+      "whyItMatters": "Instance size directly drives hosting cost — the smallest size is sufficient for a lab-scale endpoint and keeps this deployment in the low-cost tier.",
+      "expectedResult": "A new endpoint appears under Deployments with status 'Succeeded' within a few minutes."
+    },
+    {
+      "order": 8,
+      "title": "Call the endpoint from Python",
+      "instructions": "Copy the endpoint URL and key from the Deployments page, then run the client snippet below.",
+      "whyItMatters": "Calling the deployed endpoint (not the design-time flow) confirms the thing you'd actually wire into a real application — the design-time Run button and the deployed endpoint are not the same code path.",
+      "code": { "language": "python", "snippet": "import requests\n\nurl = \"<your-endpoint-url>\"\nheaders = {\"Authorization\": \"Bearer <your-endpoint-key>\", \"Content-Type\": \"application/json\"}\npayload = {\"chat_history\": [], \"product_name\": \"Aarya\"}\n\nresp = requests.post(url, headers=headers, json=payload, timeout=30)\nprint(resp.status_code, resp.json())" },
+      "expectedResult": "The script prints `200` and a JSON body containing the greeting text."
+    }
+  ],
+  "conceptChecks": [
+    {
+      "afterStep": 5,
+      "question": "If you wanted to compare three tones instead of two, what would change about how you evaluate them, and why would running all three against the exact same input still matter?",
+      "answer": "You'd add a third variant and run all three against the identical sample input in one Evaluate pass — the identical input is what isolates prompt wording as the only variable; adding a variant doesn't change that requirement, it just widens the comparison."
+    },
+    {
+      "afterStep": 7,
+      "question": "Why does instance size matter here even though this is a low-traffic lab endpoint, and what would you check before choosing a larger size in a real deployment?",
+      "answer": "Cost scales with instance size regardless of traffic — an idle oversized endpoint still bills for capacity. In a real deployment you'd check expected concurrent request volume and latency requirements before sizing up, not default to a larger size preemptively."
+    }
+  ],
+  "validationChecklist": [
+    "The flow canvas shows two variants on the llm node, both runnable without error",
+    "The Evaluate comparison table displays both variants' outputs for the same input",
+    "The deployed endpoint's status is 'Succeeded'",
+    "The Python client call returns HTTP 200 with a non-empty greeting string in the response body"
+  ],
+  "cleanup": [
+    "Delete the deployment: Deployments → support-bot-greeting deployment → Delete",
+    "Delete the flow (optional, no ongoing cost, but keeps the project tidy): Prompt Flow → support-bot-greeting → Delete",
+    "Confirm no orphaned compute instance remains under Management Center → Compute"
+  ],
+  "costEstimate": {
+    "tier": "free",
+    "monthlyEstimateUSD": 0,
+    "freeTierNotes": "Fully covered by the Azure free account's $200 starting credit if completed within a normal lab session and cleaned up afterward; gpt-4o-mini token costs for this lab's handful of test calls are a few cents at most."
+  },
+  "relatedExams": [
+    { "exam": "ab731", "domain": 2, "why": "AB-731 Domain 2 (Microsoft AI Apps & Services) covers Azure AI Foundry deployment patterns, which this lab exercises hands-on." }
+  ],
+  "relatedBlogPosts": [],
+  "relatedUseCases": [],
+  "relatedLabs": [],
+  "tags": ["azure-ai-foundry", "prompt-flow", "azure-openai"],
+  "publishedDate": "2026-08-27",
+  "updatedDate": "2026-08-27"
+}

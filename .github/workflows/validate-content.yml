@@ -1,0 +1,28 @@
+name: Validate HOL Labs content
+
+on:
+  pull_request:
+    paths:
+      - 'content/hol-labs/**'
+      - 'scripts/validate-content.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'content/hol-labs/**'
+      - 'scripts/validate-content.mjs'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate content schema
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          node scripts/validate-content.mjs \
+            content/hol-labs/index.json \
+            content/hol-labs/labs/*.json

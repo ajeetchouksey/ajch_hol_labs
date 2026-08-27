@@ -1,0 +1,27 @@
+{
+  "schema": "hol-labs-index@1",
+  "domains": [
+    { "id": "azure-ai-foundry", "label": "Azure AI Foundry", "count": 1 },
+    { "id": "github-copilot", "label": "GitHub Copilot", "count": 0 },
+    { "id": "agentic-ai", "label": "Agentic AI", "count": 0 },
+    { "id": "ai-architecture", "label": "AI Architecture", "count": 0 },
+    { "id": "ai-engineering", "label": "AI Engineering", "count": 0 }
+  ],
+  "labs": [
+    {
+      "id": "deploy-first-prompt-flow-azure-ai-foundry",
+      "title": "Deploy Your First Prompt Flow in Azure AI Foundry",
+      "domain": "azure-ai-foundry",
+      "difficulty": "beginner",
+      "estimatedMinutes": 40,
+      "costTier": "free",
+      "tags": ["azure-ai-foundry", "prompt-flow", "azure-openai"],
+      "relatedExamIds": ["ab731"],
+      "relatedUseCaseIds": [],
+      "relatedBlogSlugs": [],
+      "relatedLabIds": []
+    }
+  ],
+  "featuredIds": ["deploy-first-prompt-flow-azure-ai-foundry"],
+  "totalCount": 1
+}
