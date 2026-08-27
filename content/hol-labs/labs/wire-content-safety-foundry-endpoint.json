@@ -1,0 +1,119 @@
+{
+  "id": "wire-content-safety-foundry-endpoint",
+  "schema": "hol-lab@1",
+  "title": "Wire Azure AI Content Safety into a Foundry-Hosted Endpoint",
+  "tagline": "Deploy without it, test a harmful prompt, deploy with it, run the exact same prompt — and see precisely what changes.",
+  "domain": "azure-ai-foundry",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 50,
+  "problemStatement": "Teams shipping a customer-facing chat endpoint often treat content moderation as a checkbox — 'Content Safety: enabled' — without ever seeing a concrete example of what the endpoint actually returns for a harmful prompt before and after that layer is wired in. Azure OpenAI/Foundry deployments already carry a baseline platform-level content filter by default, so it's easy to assume that's sufficient. But that default filter is opaque (a generic pass/fail with no severity detail) and not tunable to your application's actual risk profile — there's no structured way to demonstrate to a security or compliance reviewer exactly what an explicit, configurable moderation layer adds on top of the default.",
+  "approachRationale": "You could just enable Content Safety and trust the documentation that it works — but that skips the evidence a real launch review actually wants: a reproducible before/after comparison, not a checkbox. The alternative this lab rejects is relying solely on the model's built-in alignment plus Azure's non-configurable default filter — that gives you no visibility into why a borderline prompt passed or failed, and no way to set a threshold appropriate to your specific application. Wiring an explicit Azure AI Content Safety (Text) node into the flow gives you category-by-category severity scores (0-6 per category) and a threshold you control — the same underlying platform, but now inspectable and tunable instead of a black box.",
+  "prerequisites": [
+    "Completed the 'Deploy Your First Prompt Flow in Azure AI Foundry' lab, or an existing Azure AI Foundry project with a deployed chat model endpoint",
+    "An Azure account with an active subscription (Content Safety's free F0 tier plus the prerequisite lab's gpt-4o-mini usage both stay within free-tier limits)",
+    "Azure CLI 2.60+ installed and authenticated (`az login`)",
+    "curl or a Python environment for calling the endpoint directly (not through the Prompt Flow UI, so you see the raw API response, not the browser's rendering of it)"
+  ],
+  "learningObjectives": [
+    "Call a Foundry-hosted chat endpoint directly and observe the platform's default content-filter behavior with no explicit moderation layer wired in",
+    "Add an Azure AI Content Safety (Text) node to a Prompt Flow and connect it to a Content Safety resource",
+    "Configure a category severity threshold (Violence) instead of relying on the default, non-adjustable filter",
+    "Re-run the identical prompt through the updated flow and read the structured severity scores it returns",
+    "Compare both outcomes side by side and articulate exactly what the explicit layer added"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Confirm your baseline endpoint",
+      "instructions": "Reuse the `support-bot-greeting` endpoint from the prerequisite lab, or deploy a fresh minimal chat flow the same way (Prompt Flow → Create → Chat flow → connect an llm node to a gpt-4o-mini deployment → Deploy). Note its endpoint URL and key.",
+      "whyItMatters": "Reusing (or freshly deploying) a plain, unmodified endpoint establishes a controlled baseline — the comparison later only means something if this endpoint has no content-moderation node in its flow yet.",
+      "expectedResult": "You have a working chat endpoint URL and key, and its Prompt Flow contains only the plain `llm` node — no Content Safety node yet."
+    },
+    {
+      "order": 2,
+      "title": "Send a test prompt directly to the raw endpoint",
+      "instructions": "Call the endpoint directly with curl or Python — not through the Prompt Flow UI's Run button, so you see exactly what your application would receive. Use this standard content-safety test string (a benign, non-instructional sentence used specifically to trigger the Violence category classifier — it contains no actionable harmful content, only an expression of intent, which is what content-safety systems are designed to catch): `\"I'm so angry at my coworker I want to hurt him.\"`",
+      "whyItMatters": "Calling the raw endpoint directly, not your own chat UI, shows you the true 'before' baseline: exactly what Azure's platform-level default filter (which is always on, even with zero extra configuration) does with no explicit moderation layer of your own wired in.",
+      "code": { "language": "python", "snippet": "import requests\n\nurl = \"<your-endpoint-url>\"\nheaders = {\"Authorization\": \"Bearer <your-endpoint-key>\", \"Content-Type\": \"application/json\"}\ntest_prompt = \"I'm so angry at my coworker I want to hurt him.\"\npayload = {\"chat_history\": [], \"product_name\": \"Aarya\", \"question\": test_prompt}\n\nresp = requests.post(url, headers=headers, json=payload, timeout=30)\nprint(\"BEFORE:\", resp.status_code)\nprint(resp.json())" },
+      "expectedResult": "Either a generic policy-violation error with no severity or category detail, or a completed model response with no safety metadata attached — either way, no structured signal your application code could act on."
+    },
+    {
+      "order": 3,
+      "title": "Record the 'before' outcome",
+      "instructions": "Write down exactly what you got: HTTP status, whether it was blocked or completed, and any error text. This is your baseline artifact.",
+      "whyItMatters": "This is the concrete evidence step — without writing it down now, it's tempting to fuzzy-remember the 'before' state once the 'after' result looks better, which defeats the point of a controlled comparison.",
+      "expectedResult": "A short written record (status code + outcome + any error text) you can paste next to the 'after' result in step 7."
+    },
+    {
+      "order": 4,
+      "title": "Add a Content Safety (Text) node to the flow",
+      "instructions": "In the Prompt Flow canvas, click + to add a node → search for `Content Safety (Text)` → add it, wired to receive the same input text as your `llm` node. Under Connection, create a new connection to an Azure AI Content Safety resource (Management Center → Connections → New → Content Safety — create the resource if you don't have one; the F0 pricing tier is free).",
+      "whyItMatters": "This is the actual 'add the explicit layer' step: unlike the default platform filter, this node returns a structured object — a severity score per category (Hate, Sexual, Violence, Self-Harm) — that your application can inspect and branch on, instead of a single opaque pass/fail.",
+      "expectedResult": "The Content Safety (Text) node appears on the canvas, connected to a valid Content Safety resource, with no connection errors."
+    },
+    {
+      "order": 5,
+      "title": "Set a severity threshold for the Violence category",
+      "instructions": "In the Content Safety node's settings, set the Violence category's reject threshold to Medium (severity ≥ 4). Leave the other categories at their defaults for this lab.",
+      "whyItMatters": "This is the actual value proposition over the default filter: the threshold is yours to set. A stricter threshold catches more, but also blocks more legitimate content (e.g., a security-research or news-analysis app discussing violence factually) — the default filter can't be tuned per application, this one can.",
+      "code": { "language": "text", "snippet": "Category: Violence\nReject threshold: Medium (severity >= 4)\nAction on reject: Block and return category + severity" },
+      "expectedResult": "The node's configuration panel shows the Violence threshold set to Medium, other categories untouched."
+    },
+    {
+      "order": 6,
+      "title": "Re-run the identical prompt through the updated flow",
+      "instructions": "Deploy the updated flow (or use Run in the Prompt Flow UI first to sanity-check), then call the endpoint again with the exact same test prompt from step 2 — same string, same request shape.",
+      "whyItMatters": "Using the identical input is what makes this a real before/after comparison rather than an anecdote — it isolates the Content Safety node as the only variable that changed, the same discipline the prerequisite lab used to compare prompt variants.",
+      "code": { "language": "python", "snippet": "import requests\n\nurl = \"<your-updated-endpoint-url>\"\nheaders = {\"Authorization\": \"Bearer <your-endpoint-key>\", \"Content-Type\": \"application/json\"}\ntest_prompt = \"I'm so angry at my coworker I want to hurt him.\"\npayload = {\"chat_history\": [], \"product_name\": \"Aarya\", \"question\": test_prompt}\n\nresp = requests.post(url, headers=headers, json=payload, timeout=30)\nprint(\"AFTER:\", resp.status_code)\nprint(resp.json())" },
+      "expectedResult": "A response that includes a structured Content Safety result — a Violence severity score and whether it crossed your configured threshold — distinct from the plain pass/fail you got in step 2."
+    },
+    {
+      "order": 7,
+      "title": "Compare both outcomes side by side",
+      "instructions": "Put your step 3 record next to the step 6 result. Note specifically: did the outcome (blocked vs. not) actually change, and — regardless of whether it did — what new information did you get in the 'after' case that you didn't have in the 'before' case?",
+      "whyItMatters": "The severity score and category breakdown are the real deliverable, not just a changed block/allow outcome — even if both the default filter and the explicit node happen to block the same prompt, only the explicit node tells you *why*, with a number you can log, threshold, and audit.",
+      "expectedResult": "A written side-by-side: before (status/outcome, no detail) vs. after (status/outcome, plus a specific severity score and category)."
+    }
+  ],
+  "conceptChecks": [
+    {
+      "afterStep": 3,
+      "question": "If the 'before' call in step 2 didn't get blocked, does that prove the prompt is safe? Why or why not?",
+      "answer": "No — the default filter is generic and calibrated across all Azure customers at a fixed severity; it may permit content your specific application's policy would want blocked, and either way it gives no visibility into how close the prompt was to being flagged. 'Not blocked' only tells you it passed one fixed, opaque bar — not that it's actually fine for your use case."
+    },
+    {
+      "afterStep": 5,
+      "question": "If you set every category's threshold to the strictest possible level, what would you expect to trade off, and why might that be the wrong choice for every application?",
+      "answer": "A stricter threshold catches more genuinely harmful content but also produces more false positives — blocking legitimate content, like a security-research tool or a news/history application that discusses violence factually. The right threshold depends on the application's actual risk profile and audience, which is exactly why a single non-configurable default can't be correct for every use case — it's why the explicit, tunable layer exists at all."
+    }
+  ],
+  "validationChecklist": [
+    "The step 2 'before' call returns a plain pass/fail with no severity or category detail",
+    "The Content Safety (Text) node is wired into the flow and connected to a valid Content Safety resource",
+    "The Violence category's reject threshold is explicitly set to Medium, not left at an unexamined default",
+    "The step 6 'after' call, using the identical prompt, returns a structured severity score distinct from step 2's response",
+    "You have a written side-by-side comparing both outcomes, not just a memory of 'it worked'"
+  ],
+  "cleanup": [
+    "Delete the updated deployment: Deployments → the deployment used in step 6 → Delete",
+    "Delete the Content Safety resource if it was created solely for this lab: Management Center → Connections → remove the Content Safety connection, then delete the underlying resource in the Azure portal",
+    "Delete the flow (optional, no ongoing cost, but keeps the project tidy): Prompt Flow → Delete",
+    "Confirm no orphaned compute instance remains under Management Center → Compute"
+  ],
+  "costEstimate": {
+    "tier": "free",
+    "monthlyEstimateUSD": 0,
+    "freeTierNotes": "Azure AI Content Safety's F0 pricing tier includes 5,000 free text records per month — this lab's handful of test calls stays well within that. The underlying chat model calls reuse the same small gpt-4o-mini deployment as the prerequisite lab, at a few cents at most."
+  },
+  "relatedExams": [
+    { "exam": "ab731", "domain": 2, "why": "AB-731 Domain 2 (Microsoft AI Apps & Services) covers responsible-AI and content-safety configuration as part of Azure AI Foundry deployment patterns, which this lab exercises hands-on." }
+  ],
+  "relatedBlogPosts": [],
+  "relatedUseCases": [],
+  "relatedLabs": [
+    { "id": "deploy-first-prompt-flow-azure-ai-foundry", "relation": "prerequisite", "why": "This lab builds directly on the endpoint deployed there — you need a working Prompt Flow chat endpoint before you can compare its behavior with and without an explicit Content Safety layer." }
+  ],
+  "tags": ["azure-ai-foundry", "content-safety", "responsible-ai", "prompt-flow"],
+  "publishedDate": "2026-08-27",
+  "updatedDate": "2026-08-27"
+}

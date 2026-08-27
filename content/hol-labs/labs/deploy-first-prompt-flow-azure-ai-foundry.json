@@ -113,7 +113,9 @@
   ],
   "relatedBlogPosts": [],
   "relatedUseCases": [],
-  "relatedLabs": [],
+  "relatedLabs": [
+    { "id": "wire-content-safety-foundry-endpoint", "relation": "next", "why": "Natural next step: add an explicit, configurable Content Safety layer to the endpoint you just deployed here, and see exactly what it adds over the default filter." }
+  ],
   "tags": ["azure-ai-foundry", "prompt-flow", "azure-openai"],
   "publishedDate": "2026-08-27",
   "updatedDate": "2026-08-27"
