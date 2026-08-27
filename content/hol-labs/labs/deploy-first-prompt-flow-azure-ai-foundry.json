@@ -8,6 +8,7 @@
   "estimatedMinutes": 40,
   "problemStatement": "Teams shipping a customer-support bot need to iterate on prompt wording, test variants, and compare outputs before committing changes to production — doing this by editing raw strings in application code means every tweak requires a full redeploy and there's no structured way to compare two prompt versions side by side.",
   "approachRationale": "A raw prompt string embedded in application code would technically work, but it loses versioning, can't be A/B tested without custom tooling, and mixes prompt-engineering concerns with application logic. Azure AI Foundry's Prompt Flow gives you a visual, versioned flow with built-in variant comparison — the same underlying model call, but with iteration and evaluation built in rather than bolted on.",
+  "mermaidDiagram": "flowchart TD\n    A[Azure AI Foundry Project] --> B[Create Prompt Flow: support-bot-greeting]\n    B --> C[llm node -- gpt-4o-mini]\n    C --> D[Variant: default prompt]\n    C --> E[Variant: variant_1_formal]\n    D --> F[Evaluate: run both variants,\\nsame input]\n    E --> F\n    F --> G[Compare outputs side by side]\n    G --> H[Deploy flow as endpoint]\n    H --> I[Call endpoint from Python client]\n    I --> J[200 OK + greeting response]",
   "prerequisites": [
     "An Azure account with an active subscription (the free account's $200 starting credit fully covers this lab)",
     "Access to an Azure AI Foundry project (create one at ai.azure.com if you don't have one)",
