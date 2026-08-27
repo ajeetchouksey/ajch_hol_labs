@@ -11,6 +11,7 @@
     {
       "id": "deploy-first-prompt-flow-azure-ai-foundry",
       "title": "Deploy Your First Prompt Flow in Azure AI Foundry",
+      "tagline": "Compare prompt variants side by side instead of redeploying every tweak.",
       "domain": "azure-ai-foundry",
       "difficulty": "beginner",
       "estimatedMinutes": 40,
