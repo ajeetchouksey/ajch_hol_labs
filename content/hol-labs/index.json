@@ -1,7 +1,7 @@
 {
   "schema": "hol-labs-index@1",
   "domains": [
-    { "id": "azure-ai-foundry", "label": "Azure AI Foundry", "count": 1 },
+    { "id": "azure-ai-foundry", "label": "Azure AI Foundry", "count": 2 },
     { "id": "github-copilot", "label": "GitHub Copilot", "count": 0 },
     { "id": "agentic-ai", "label": "Agentic AI", "count": 0 },
     { "id": "ai-architecture", "label": "AI Architecture", "count": 0 },
@@ -20,9 +20,24 @@
       "relatedExamIds": ["ab731"],
       "relatedUseCaseIds": [],
       "relatedBlogSlugs": [],
-      "relatedLabIds": []
+      "relatedLabIds": ["wire-content-safety-foundry-endpoint"]
+    },
+    {
+      "id": "wire-content-safety-foundry-endpoint",
+      "title": "Wire Azure AI Content Safety into a Foundry-Hosted Endpoint",
+      "tagline": "Deploy without it, test a harmful prompt, deploy with it, run the exact same prompt — and see precisely what changes.",
+      "domain": "azure-ai-foundry",
+      "difficulty": "intermediate",
+      "estimatedMinutes": 50,
+      "costTier": "free",
+      "tags": ["azure-ai-foundry", "content-safety", "responsible-ai", "prompt-flow"],
+      "relatedExamIds": ["ab731"],
+      "relatedUseCaseIds": [],
+      "relatedBlogSlugs": [],
+      "relatedLabIds": ["deploy-first-prompt-flow-azure-ai-foundry"]
     }
   ],
-  "featuredIds": ["deploy-first-prompt-flow-azure-ai-foundry"],
-  "totalCount": 1
+  "featuredIds": ["deploy-first-prompt-flow-azure-ai-foundry", "wire-content-safety-foundry-endpoint"],
+  "totalCount": 2
 }
+
