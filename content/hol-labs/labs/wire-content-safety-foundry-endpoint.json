@@ -35,7 +35,10 @@
       "title": "Send a test prompt directly to the raw endpoint",
       "instructions": "Call the endpoint directly with curl or Python — not through the Prompt Flow UI's Run button, so you see exactly what your application would receive. Use this standard content-safety test string (a benign, non-instructional sentence used specifically to trigger the Violence category classifier — it contains no actionable harmful content, only an expression of intent, which is what content-safety systems are designed to catch): `\"I'm so angry at my coworker I want to hurt him.\"`",
       "whyItMatters": "Calling the raw endpoint directly, not your own chat UI, shows you the true 'before' baseline: exactly what Azure's platform-level default filter (which is always on, even with zero extra configuration) does with no explicit moderation layer of your own wired in.",
-      "code": { "language": "python", "snippet": "import requests\n\nurl = \"<your-endpoint-url>\"\nheaders = {\"Authorization\": \"Bearer <your-endpoint-key>\", \"Content-Type\": \"application/json\"}\ntest_prompt = \"I'm so angry at my coworker I want to hurt him.\"\npayload = {\"chat_history\": [], \"product_name\": \"Aarya\", \"question\": test_prompt}\n\nresp = requests.post(url, headers=headers, json=payload, timeout=30)\nprint(\"BEFORE:\", resp.status_code)\nprint(resp.json())" },
+      "code": {
+        "language": "python",
+        "snippet": "import requests\n\nurl = \"<your-endpoint-url>\"\nheaders = {\"Authorization\": \"Bearer <your-endpoint-key>\", \"Content-Type\": \"application/json\"}\ntest_prompt = \"I'm so angry at my coworker I want to hurt him.\"\npayload = {\"chat_history\": [], \"product_name\": \"Aarya\", \"question\": test_prompt}\n\nresp = requests.post(url, headers=headers, json=payload, timeout=30)\nprint(\"BEFORE:\", resp.status_code)\nprint(resp.json())"
+      },
       "expectedResult": "Either a generic policy-violation error with no severity or category detail, or a completed model response with no safety metadata attached — either way, no structured signal your application code could act on."
     },
     {
@@ -57,7 +60,10 @@
       "title": "Set a severity threshold for the Violence category",
       "instructions": "In the Content Safety node's settings, set the Violence category's reject threshold to Medium (severity ≥ 4). Leave the other categories at their defaults for this lab.",
       "whyItMatters": "This is the actual value proposition over the default filter: the threshold is yours to set. A stricter threshold catches more, but also blocks more legitimate content (e.g., a security-research or news-analysis app discussing violence factually) — the default filter can't be tuned per application, this one can.",
-      "code": { "language": "text", "snippet": "Category: Violence\nReject threshold: Medium (severity >= 4)\nAction on reject: Block and return category + severity" },
+      "code": {
+        "language": "text",
+        "snippet": "Category: Violence\nReject threshold: Medium (severity >= 4)\nAction on reject: Block and return category + severity"
+      },
       "expectedResult": "The node's configuration panel shows the Violence threshold set to Medium, other categories untouched."
     },
     {
@@ -65,7 +71,10 @@
       "title": "Re-run the identical prompt through the updated flow",
       "instructions": "Deploy the updated flow (or use Run in the Prompt Flow UI first to sanity-check), then call the endpoint again with the exact same test prompt from step 2 — same string, same request shape.",
       "whyItMatters": "Using the identical input is what makes this a real before/after comparison rather than an anecdote — it isolates the Content Safety node as the only variable that changed, the same discipline the prerequisite lab used to compare prompt variants.",
-      "code": { "language": "python", "snippet": "import requests\n\nurl = \"<your-updated-endpoint-url>\"\nheaders = {\"Authorization\": \"Bearer <your-endpoint-key>\", \"Content-Type\": \"application/json\"}\ntest_prompt = \"I'm so angry at my coworker I want to hurt him.\"\npayload = {\"chat_history\": [], \"product_name\": \"Aarya\", \"question\": test_prompt}\n\nresp = requests.post(url, headers=headers, json=payload, timeout=30)\nprint(\"AFTER:\", resp.status_code)\nprint(resp.json())" },
+      "code": {
+        "language": "python",
+        "snippet": "import requests\n\nurl = \"<your-updated-endpoint-url>\"\nheaders = {\"Authorization\": \"Bearer <your-endpoint-key>\", \"Content-Type\": \"application/json\"}\ntest_prompt = \"I'm so angry at my coworker I want to hurt him.\"\npayload = {\"chat_history\": [], \"product_name\": \"Aarya\", \"question\": test_prompt}\n\nresp = requests.post(url, headers=headers, json=payload, timeout=30)\nprint(\"AFTER:\", resp.status_code)\nprint(resp.json())"
+      },
       "expectedResult": "A response that includes a structured Content Safety result — a Violence severity score and whether it crossed your configured threshold — distinct from the plain pass/fail you got in step 2."
     },
     {
@@ -107,14 +116,33 @@
     "freeTierNotes": "Azure AI Content Safety's F0 pricing tier includes 5,000 free text records per month — this lab's handful of test calls stays well within that. The underlying chat model calls reuse the same small gpt-4o-mini deployment as the prerequisite lab, at a few cents at most."
   },
   "relatedExams": [
-    { "exam": "ab731", "domain": 2, "why": "AB-731 Domain 2 (Microsoft AI Apps & Services) covers responsible-AI and content-safety configuration as part of Azure AI Foundry deployment patterns, which this lab exercises hands-on." }
+    {
+      "exam": "ab731",
+      "domain": 2,
+      "why": "AB-731 Domain 2 (Microsoft AI Apps & Services) covers responsible-AI and content-safety configuration as part of Azure AI Foundry deployment patterns, which this lab exercises hands-on."
+    }
   ],
   "relatedBlogPosts": [],
   "relatedUseCases": [],
   "relatedLabs": [
-    { "id": "deploy-first-prompt-flow-azure-ai-foundry", "relation": "prerequisite", "why": "This lab builds directly on the endpoint deployed there — you need a working Prompt Flow chat endpoint before you can compare its behavior with and without an explicit Content Safety layer." }
+    {
+      "id": "deploy-first-prompt-flow-azure-ai-foundry",
+      "relation": "prerequisite",
+      "why": "This lab builds directly on the endpoint deployed there — you need a working Prompt Flow chat endpoint before you can compare its behavior with and without an explicit Content Safety layer."
+    }
   ],
-  "tags": ["azure-ai-foundry", "content-safety", "responsible-ai", "prompt-flow"],
+  "tags": [
+    "azure-ai-foundry",
+    "content-safety",
+    "responsible-ai",
+    "prompt-flow"
+  ],
   "publishedDate": "2026-08-27",
-  "updatedDate": "2026-08-27"
+  "updatedDate": "2026-08-27",
+  "taxonomyIds": [
+    "azure-ai-foundry",
+    "content-safety",
+    "responsible-ai",
+    "prompt-flow"
+  ]
 }

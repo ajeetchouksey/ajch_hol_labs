@@ -40,7 +40,10 @@
       "title": "Connect the LLM node to a deployed chat model",
       "instructions": "Click the `llm` node, and under Connection select an existing Azure OpenAI or Foundry model connection (create one under Management Center → Connections if none exists). Choose a small model such as gpt-4o-mini for this lab.",
       "whyItMatters": "gpt-4o-mini keeps this lab in the free/low-cost tier — the concept (variant comparison) doesn't require a large model, and using a small one is the deliberate cost-conscious choice, not a limitation.",
-      "code": { "language": "text", "snippet": "Connection: <your-foundry-connection-name>\nDeployment: gpt-4o-mini\nTemperature: 0.7" },
+      "code": {
+        "language": "text",
+        "snippet": "Connection: <your-foundry-connection-name>\nDeployment: gpt-4o-mini\nTemperature: 0.7"
+      },
       "expectedResult": "The node shows a green connected indicator and the deployment name in its header."
     },
     {
@@ -48,7 +51,10 @@
       "title": "Write the base prompt",
       "instructions": "In the llm node's prompt editor, write a system prompt for a support bot greeting, then click Run to test it against a sample chat_history input.",
       "whyItMatters": "Testing one node in isolation before wiring the full flow catches prompt-formatting errors early — cheaper to fix here than after deployment.",
-      "code": { "language": "jinja2", "snippet": "system:\nYou are a concise, friendly support assistant for {{product_name}}. Greet the user in one sentence and ask what they need help with." },
+      "code": {
+        "language": "jinja2",
+        "snippet": "system:\nYou are a concise, friendly support assistant for {{product_name}}. Greet the user in one sentence and ask what they need help with."
+      },
       "expectedResult": "The Run panel shows a one-sentence greeting output, no error banner."
     },
     {
@@ -77,7 +83,10 @@
       "title": "Call the endpoint from Python",
       "instructions": "Copy the endpoint URL and key from the Deployments page, then run the client snippet below.",
       "whyItMatters": "Calling the deployed endpoint (not the design-time flow) confirms the thing you'd actually wire into a real application — the design-time Run button and the deployed endpoint are not the same code path.",
-      "code": { "language": "python", "snippet": "import requests\n\nurl = \"<your-endpoint-url>\"\nheaders = {\"Authorization\": \"Bearer <your-endpoint-key>\", \"Content-Type\": \"application/json\"}\npayload = {\"chat_history\": [], \"product_name\": \"Aarya\"}\n\nresp = requests.post(url, headers=headers, json=payload, timeout=30)\nprint(resp.status_code, resp.json())" },
+      "code": {
+        "language": "python",
+        "snippet": "import requests\n\nurl = \"<your-endpoint-url>\"\nheaders = {\"Authorization\": \"Bearer <your-endpoint-key>\", \"Content-Type\": \"application/json\"}\npayload = {\"chat_history\": [], \"product_name\": \"Aarya\"}\n\nresp = requests.post(url, headers=headers, json=payload, timeout=30)\nprint(resp.status_code, resp.json())"
+      },
       "expectedResult": "The script prints `200` and a JSON body containing the greeting text."
     }
   ],
@@ -110,14 +119,31 @@
     "freeTierNotes": "Fully covered by the Azure free account's $200 starting credit if completed within a normal lab session and cleaned up afterward; gpt-4o-mini token costs for this lab's handful of test calls are a few cents at most."
   },
   "relatedExams": [
-    { "exam": "ab731", "domain": 2, "why": "AB-731 Domain 2 (Microsoft AI Apps & Services) covers Azure AI Foundry deployment patterns, which this lab exercises hands-on." }
+    {
+      "exam": "ab731",
+      "domain": 2,
+      "why": "AB-731 Domain 2 (Microsoft AI Apps & Services) covers Azure AI Foundry deployment patterns, which this lab exercises hands-on."
+    }
   ],
   "relatedBlogPosts": [],
   "relatedUseCases": [],
   "relatedLabs": [
-    { "id": "wire-content-safety-foundry-endpoint", "relation": "next", "why": "Natural next step: add an explicit, configurable Content Safety layer to the endpoint you just deployed here, and see exactly what it adds over the default filter." }
+    {
+      "id": "wire-content-safety-foundry-endpoint",
+      "relation": "next",
+      "why": "Natural next step: add an explicit, configurable Content Safety layer to the endpoint you just deployed here, and see exactly what it adds over the default filter."
+    }
   ],
-  "tags": ["azure-ai-foundry", "prompt-flow", "azure-openai"],
+  "tags": [
+    "azure-ai-foundry",
+    "prompt-flow",
+    "azure-openai"
+  ],
   "publishedDate": "2026-08-27",
-  "updatedDate": "2026-08-27"
+  "updatedDate": "2026-08-27",
+  "taxonomyIds": [
+    "azure-ai-foundry",
+    "prompt-flow",
+    "azure-openai"
+  ]
 }
