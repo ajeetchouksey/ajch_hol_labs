@@ -129,6 +129,11 @@
       "id": "deploy-first-prompt-flow-azure-ai-foundry",
       "relation": "prerequisite",
       "why": "This lab builds directly on the endpoint deployed there — you need a working Prompt Flow chat endpoint before you can compare its behavior with and without an explicit Content Safety layer."
+    },
+    {
+      "id": "build-first-agent-foundry-agent-service",
+      "relation": "prerequisite",
+      "why": "Once your agent can call File Search and Code Interpreter against real documents and data, wiring explicit Content Safety configuration on top of it is a natural next step — tool-augmented agents surface prompt-injection and unsafe-output risks that a bare chat endpoint doesn't have."
     }
   ],
   "tags": [
