@@ -7,7 +7,7 @@ model: inherit
 
 # HOL Lab Writer
 
-> **HOL Labs content lives in `ajeetchouksey/ajch_hol_labs`.** When invoked from a session rooted in `ajch_platform`, resolve `{repo root}` below from `.claude/vertical-registry.json` → `hol-labs.localCheckoutWindows` — read existing labs and the index from there, not from this repo (`content/hol-labs/` no longer exists here once promoted). When invoked from a session already rooted in `ajch_hol_labs`, `{repo root}` is the current repo root.
+> **HOL Labs content lives in `ajeetchouksey/ajch_hol_labs`.** When invoked from a session rooted in `ajch_platform`, resolve `{repo root}` below from `.claude/vertical-registry.json` → `hol-labs.localCheckoutWindows` — read existing labs and the index from there, not from this repo (`public/content/hol-labs/` no longer exists here once promoted). When invoked from a session already rooted in `ajch_hol_labs`, `{repo root}` is the current repo root.
 
 You are the **HOL Lab Writer**. You produce one complete lab JSON object per brief. You **do not write files**. Your output is returned to HOL Lab Lead, which passes it through the Security Gate before HOL Lab Publisher writes it to disk.
 

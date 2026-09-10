@@ -15,7 +15,7 @@ Two fields exist specifically so a lab builds judgment instead of being a generi
 
 ## Publishing model
 
-This vertical has a dedicated content-authoring pipeline, matching the pattern used by Use Cases (Usecase Lead → Usecase Writer → AppSec Engineer → Usecase Publisher): **HOL Lab Lead → HOL Lab Writer → AppSec Engineer (Security Gate) → HOL Lab Publisher**, defined in `.claude/agents/`. The shared pipeline contract lives in `.claude/skills/vertical-pipeline/SKILL.md`.
+This vertical has a dedicated content-authoring pipeline, matching the pattern used by Use Cases (Usecase Lead → Usecase Writer → AppSec Engineer → Usecase Publisher): **HOL Lab Lead → HOL Lab Writer → QA Engineer (Diagram Gate, when a lab includes a `mermaidDiagram`) → AppSec Engineer (Security Gate) → HOL Lab Publisher**, defined in `.claude/agents/`. QA Engineer validates any Mermaid diagram against `.claude/skills/mermaid-diagram-craft/SKILL.md`'s readability/contrast checklist before the draft ever reaches the Security Gate. The shared pipeline contract lives in `.claude/skills/vertical-pipeline/SKILL.md`.
 
 **Content files are never written directly** — any addition or edit to `content/hol-labs/` should go through HOL Lab Lead as the entry point; see `CLAUDE.md` at this repo's root.
 
