@@ -1,0 +1,213 @@
+{
+  "id": "build-first-agent-foundry-agent-service",
+  "schema": "hol-lab@1",
+  "title": "Build Your First Agent with Azure AI Foundry Agent Service",
+  "tagline": "Give a chat call a memory, a document library, and a Python sandbox — then watch the same question get answered three different ways.",
+  "domain": "azure-ai-foundry",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 65,
+  "problemStatement": "A developer who has only ever called a stateless chat-completions endpoint doesn't understand why Agent Service's stateful primitives (Agent, Thread, Message, Run) exist, or what actually changes when a built-in tool like File Search or Code Interpreter is attached versus calling the model directly — they'll either hand-roll conversation-history arrays and custom retrieval stitching that Agent Service already provides, or bolt on a tool without understanding what observable behavior it's supposed to change. This isn't hypothetical: real production patterns already depend on these primitives — a contract-redline use case runs RAG over a versioned legal playbook to ground every clause verdict in a cited source, and an incident-postmortem synthesis pipeline explicitly orchestrates parallel subagents on \"Azure AI Foundry agent framework\" — but nothing in this domain yet teaches the Agent/Thread/Run foundation those patterns are built on.",
+  "approachRationale": "The alternative this lab rejects is staying with a single stateless chat-completions call and hand-building everything Agent Service gives you for free: a client-side conversation-history array, custom polling/orchestration logic for tool calls, and a hand-stitched RAG pipeline (chunk, embed, index, retrieve, cite) for document grounding. That's a legitimate architecture, but it means re-solving problems the platform has already solved, and it hides the actual decision point — this lab makes the decision point visible by holding the question constant and only changing which built-in tool is attached, so you see exactly what File Search's automatic chunking/embedding/citation and Code Interpreter's sandboxed execution add over a bare model call, instead of taking either one on faith.",
+  "mermaidDiagram": "flowchart TD\n    A[Agent: persona on gpt-4o-mini] --> B[Thread: persistent conversation]\n    B --> C[Message: user question]\n    C --> D[Run: one execution against the thread]\n    D --> E{Same question,\\nthree tool configurations}\n    E -->|No tools attached| F[Baseline answer\\nno citation, no computation]\n    E -->|File Search attached| G[Vector store over uploaded docs\\nAnswer + file_citation annotation]\n    E -->|Code Interpreter attached| H[Sandboxed Python execution\\nComputed stat + generated chart]\n    F --> I[Compare all three responses]\n    G --> I\n    H --> I",
+  "mermaidDiagramCaption": "Agent/Thread/Run loop compared across three tool configurations",
+  "prerequisites": [
+    "An Azure account with an active subscription (the free account's $200 starting credit covers the model tokens; File Search and Code Interpreter carry small additional per-use charges — see costEstimate)",
+    "An Azure AI Foundry project with a gpt-4o-mini model deployment (create one at ai.azure.com if you don't have one — see the 'Deploy Your First Prompt Flow' lab for the project setup steps)",
+    "The Foundry User role on your Foundry project (required to create, update, and run agents, and to upload files/create vector stores under a basic agent setup)",
+    "Python 3.9+ installed locally, with `pip install azure-ai-projects azure-ai-agents azure-identity`",
+    "Azure CLI 2.60+ installed and authenticated (`az login`)"
+  ],
+  "learningObjectives": [
+    "Create an Agent Service agent with a system persona and no tools, and explain what each of the four core objects (Agent, Thread, Message, Run) persists",
+    "Start a Thread, post a Message, and execute a Run, then read the run status and message list directly from the SDK",
+    "Attach the File Search tool to a small uploaded document set and distinguish a cited, grounded answer from an uncited baseline answer to the identical question",
+    "Attach the Code Interpreter tool to an uploaded CSV and distinguish a real sandboxed computation from a model's estimated guess",
+    "Compare tools-disabled, File-Search, and Code-Interpreter responses to the same underlying question and articulate what each tool concretely changes"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Prepare your Foundry project and agent environment",
+      "instructions": "In your Foundry project, confirm a gpt-4o-mini deployment exists (Models + Endpoints). Note your project endpoint (format: `https://<resource-name>.services.ai.azure.com/api/projects/<project-name>`) and your model deployment name. Set both as environment variables, then install the SDKs.",
+      "whyItMatters": "Agent Service authenticates and scopes everything — agents, threads, uploaded files, vector stores — to this one project endpoint. Getting the endpoint and role assignment right here is what makes every later `create_agent`/`threads.create`/`files.upload_and_poll` call in this lab actually work instead of failing on a 403 or 404.",
+      "code": {
+        "language": "bash",
+        "snippet": "export PROJECT_ENDPOINT=\"https://<resource-name>.services.ai.azure.com/api/projects/<project-name>\"\nexport MODEL_DEPLOYMENT_NAME=\"gpt-4o-mini\"\n\npip install azure-ai-projects azure-ai-agents azure-identity\naz login"
+      },
+      "expectedResult": "`az login` succeeds and both environment variables are set with no placeholder text remaining."
+    },
+    {
+      "order": 2,
+      "title": "Create your first Agent — persona, no tools yet",
+      "instructions": "Create an Agent resource with a system persona and instructions, deliberately with no tools attached. This is the object that persists your model choice and instructions across every conversation you run against it.",
+      "whyItMatters": "Creating the Agent with zero tools first, before touching File Search or Code Interpreter, isolates it as a distinct persisted resource from the Thread and Run you'll create next — if you skip straight to a tool-enabled agent, it's easy to conflate 'the agent' with 'the tool,' which is exactly the confusion this lab exists to clear up.",
+      "code": {
+        "language": "python",
+        "snippet": "import os\nfrom azure.ai.projects import AIProjectClient\nfrom azure.identity import DefaultAzureCredential\n\nproject_client = AIProjectClient(\n    endpoint=os.environ[\"PROJECT_ENDPOINT\"],\n    credential=DefaultAzureCredential(),\n)\n\nagent = project_client.agents.create_agent(\n    model=os.environ[\"MODEL_DEPLOYMENT_NAME\"],\n    name=\"it-support-triage-agent\",\n    instructions=(\n        \"You are a first-line IT support triage assistant for Contoso. \"\n        \"State your confidence level before recommending an escalation, \"\n        \"and say clearly when you are guessing versus citing a source.\"\n    ),\n)\nprint(f\"Created agent, ID: {agent.id}\")"
+      },
+      "expectedResult": "The script prints a non-empty agent ID starting with `asst_`."
+    },
+    {
+      "order": 3,
+      "title": "Start a Thread, post a Message, execute a Run",
+      "instructions": "Create a Thread, add a user Message to it, then create and process a Run of your agent against that thread. List the thread's messages afterward to see both turns.",
+      "whyItMatters": "This is the actual point of Agent Service over a stateless chat-completions call: the Thread persists the conversation server-side, so a later Run against the same thread automatically has the full history — you never reassemble a messages array by hand. Notice that Agent, Thread, and Run are three separate IDs on three separate objects, not one blob — that separation is what lets one Agent definition serve many independent Threads.",
+      "code": {
+        "language": "python",
+        "snippet": "thread = project_client.agents.threads.create()\n\nmessage = project_client.agents.messages.create(\n    thread_id=thread.id,\n    role=\"user\",\n    content=\"My VPN client won't connect after the latest Windows update. What should I check first?\",\n)\n\nrun = project_client.agents.runs.create_and_process(\n    thread_id=thread.id,\n    agent_id=agent.id,\n)\nprint(f\"Run finished with status: {run.status}\")\n\nfor m in project_client.agents.messages.list(thread_id=thread.id):\n    text = m.content[0].text.value if m.content else \"\"\n    print(f\"{m.role}: {text[:120]}\")"
+      },
+      "expectedResult": "`run.status` prints `completed`, and the message list shows exactly two entries — one `user` and one `assistant` — with distinct, non-empty `agent.id`, `thread.id`, and `run.id` values captured earlier in the session."
+    },
+    {
+      "order": 4,
+      "title": "Ask a policy question with no tools attached — establish the baseline",
+      "instructions": "On a fresh Thread against the same (still tool-less) agent, ask a question the model cannot know from training data: `\"What is Contoso's laptop refresh policy for remote engineers?\"` Record the answer and note whether it cites any source.",
+      "whyItMatters": "This is the deliberate 'before' control — without a tool, the model can only pattern-match to something plausible-sounding, since it has no actual Contoso policy document in its training data. Writing this down now, before adding any tool, is what makes step 6's comparison a real before/after rather than a fuzzy memory of 'it seemed different.'",
+      "code": {
+        "language": "python",
+        "snippet": "baseline_thread = project_client.agents.threads.create()\nproject_client.agents.messages.create(\n    thread_id=baseline_thread.id,\n    role=\"user\",\n    content=\"What is Contoso's laptop refresh policy for remote engineers?\",\n)\nbaseline_run = project_client.agents.runs.create_and_process(\n    thread_id=baseline_thread.id, agent_id=agent.id,\n)\nfor m in project_client.agents.messages.list(thread_id=baseline_thread.id):\n    if m.role == \"assistant\":\n        print(m.content[0].text.value)\n        print(\"Annotations:\", m.content[0].text.annotations)"
+      },
+      "expectedResult": "The assistant responds with a generic, hedged answer (e.g. 'policies vary by company, you should check with HR') and `text.annotations` prints an empty list — no citation of any kind."
+    },
+    {
+      "order": 5,
+      "title": "Attach File Search: upload a small doc set and create a vector store",
+      "instructions": "Create two or three short Markdown/text files describing a fictional Contoso IT policy (laptop refresh cadence, VPN troubleshooting steps). Upload them, index them into a vector store, and update your agent to attach the File Search tool pointing at that vector store.",
+      "whyItMatters": "File Search's vector store handles chunking, embedding, and hybrid keyword+semantic search for you — this is the actual value over a hand-built RAG pipeline, the same trade-off the contract-redline playbook use case makes at production scale. Updating the existing agent (rather than creating a new one) also shows that tools are additive configuration on an Agent, not a different kind of object.",
+      "code": {
+        "language": "python",
+        "snippet": "from azure.ai.agents.models import FileSearchTool\n\nfile_ids = []\nfor path in [\"docs/contoso-laptop-refresh-policy.md\", \"docs/contoso-vpn-troubleshooting.md\"]:\n    uploaded = project_client.agents.files.upload_and_poll(file_path=path, purpose=\"assistants\")\n    file_ids.append(uploaded.id)\n\nvector_store = project_client.agents.vector_stores.create_and_poll(\n    file_ids=file_ids, name=\"contoso-it-docs\",\n)\n\nfile_search = FileSearchTool(vector_store_ids=[vector_store.id])\nagent = project_client.agents.update_agent(\n    agent_id=agent.id,\n    tools=file_search.definitions,\n    tool_resources=file_search.resources,\n)\nprint(f\"Vector store ready: {vector_store.id}\")"
+      },
+      "expectedResult": "The vector store's status polls to `completed` and prints its ID; `agent.tools` now contains a `file_search` tool definition."
+    },
+    {
+      "order": 6,
+      "title": "Ask the identical policy question through File Search — inspect the citation",
+      "instructions": "On a new Thread against the now File-Search-enabled agent, ask the exact same question from step 4. Print the response text and its annotations.",
+      "whyItMatters": "The response's `file_citation` annotation — pointing at a specific uploaded file ID — is the concrete, checkable difference between 'grounded' and 'plausible-sounding.' Step 4's answer and this one might both read confidently, but only one of them can be traced back to an actual source document; that traceability is File Search's entire value proposition.",
+      "code": {
+        "language": "python",
+        "snippet": "grounded_thread = project_client.agents.threads.create()\nproject_client.agents.messages.create(\n    thread_id=grounded_thread.id,\n    role=\"user\",\n    content=\"What is Contoso's laptop refresh policy for remote engineers?\",\n)\ngrounded_run = project_client.agents.runs.create_and_process(\n    thread_id=grounded_thread.id, agent_id=agent.id,\n)\nfor m in project_client.agents.messages.list(thread_id=grounded_thread.id):\n    if m.role == \"assistant\":\n        print(m.content[0].text.value)\n        for annotation in m.content[0].text.annotations:\n            print(\"  cited file:\", annotation.file_citation.file_id)"
+      },
+      "expectedResult": "The response quotes specific policy language (e.g. a refresh cadence in months) and prints at least one `cited file:` line with a real file ID from step 5's upload."
+    },
+    {
+      "order": 7,
+      "title": "Attach Code Interpreter: upload a CSV and ask for a computed chart",
+      "instructions": "Create a small CSV of fictional helpdesk ticket data (category, resolution_hours). Upload it and add the Code Interpreter tool to your agent alongside File Search. On a new Thread, ask the agent to compute the average resolution time per category and chart it as a bar chart.",
+      "whyItMatters": "Code Interpreter runs real Python in a Microsoft-managed sandbox against your actual uploaded file — it isn't the model 'doing math from training patterns,' which is unreliable for anything beyond trivial arithmetic. This is the second built-in tool this lab covers, and adding it to the same agent (not a new one) shows tools compose rather than requiring a separate agent per capability.",
+      "code": {
+        "language": "python",
+        "snippet": "from azure.ai.agents.models import CodeInterpreterTool\n\ncsv_file = project_client.agents.files.upload_and_poll(\n    file_path=\"data/helpdesk_tickets_last_quarter.csv\", purpose=\"assistants\",\n)\ncode_interpreter = CodeInterpreterTool(file_ids=[csv_file.id])\n\nagent = project_client.agents.update_agent(\n    agent_id=agent.id,\n    tools=file_search.definitions + code_interpreter.definitions,\n    tool_resources=code_interpreter.resources,\n)\n\nchart_thread = project_client.agents.threads.create()\nproject_client.agents.messages.create(\n    thread_id=chart_thread.id,\n    role=\"user\",\n    content=\"Using the uploaded CSV, compute the average ticket resolution time per category and chart it as a bar chart.\",\n)\nchart_run = project_client.agents.runs.create_and_process(\n    thread_id=chart_thread.id, agent_id=agent.id,\n)\nprint(f\"Run finished with status: {chart_run.status}\")"
+      },
+      "expectedResult": "`chart_run.status` prints `completed` with no error."
+    },
+    {
+      "order": 8,
+      "title": "Inspect the sandboxed output and download the generated chart",
+      "instructions": "List the chart thread's messages, find the assistant message's `image_file` content, and save it to disk using the SDK's file download helper.",
+      "whyItMatters": "A saved PNG file that opens and shows real numbers computed from your actual CSV is the checkable proof that execution happened in a sandbox, not that the model 'guessed a reasonable-looking chart.' This is the distinction that matters when a number like this gets quoted to a stakeholder later.",
+      "code": {
+        "language": "python",
+        "snippet": "for m in project_client.agents.messages.list(thread_id=chart_thread.id):\n    for content in m.content:\n        if hasattr(content, \"image_file\"):\n            project_client.agents.files.save(\n                file_id=content.image_file.file_id,\n                file_name=\"ticket_resolution_by_category.png\",\n            )\n            print(\"Saved chart: ticket_resolution_by_category.png\")"
+      },
+      "expectedResult": "A file named `ticket_resolution_by_category.png` exists in the working directory and opens to show a bar chart with one bar per ticket category, values matching what you'd compute by hand from the CSV."
+    },
+    {
+      "order": 9,
+      "title": "Compare all three runs side by side",
+      "instructions": "Put step 4's baseline answer, step 6's File-Search answer, and steps 7-8's Code-Interpreter result next to each other. For each, note: was the answer grounded in a real source or file, and could you independently verify it without trusting the model's confidence?",
+      "whyItMatters": "The comparison — not any single answer — is the actual deliverable of this lab: the same Agent/Thread/Run loop produced three qualitatively different classes of answer purely based on which tool was attached, which is the concrete lesson a bare chat-completions endpoint never surfaces on its own.",
+      "expectedResult": "A written three-row comparison: (1) no tools — uncited, unverifiable; (2) File Search — cited to a specific uploaded file; (3) Code Interpreter — backed by an executed computation and a generated chart file."
+    }
+  ],
+  "conceptChecks": [
+    {
+      "afterStep": 3,
+      "question": "If you'd called the model through a stateless chat-completions endpoint instead of Agent Service, what would you have had to build yourself to reproduce what the Thread and Run gave you here for free, and why does that matter once you have hundreds of concurrent conversations instead of one?",
+      "answer": "You'd have to maintain your own conversation-history array per user, append every turn to it client-side, and resend the whole growing array on every call — plus build your own logic for polling/handling any tool-call step in between. At one conversation that's a minor inconvenience; at hundreds of concurrent conversations it becomes a real state-management and storage problem that the Thread object already solves as a managed, persistent resource."
+    },
+    {
+      "afterStep": 6,
+      "question": "The step 4 baseline answer and the step 6 File-Search answer might both read equally confident. What's the one property of the step 6 response that makes it independently verifiable, and why doesn't that property exist in step 4's response?",
+      "answer": "The step 6 response carries a `file_citation` annotation pointing at a specific uploaded file ID — you can open that exact file and check whether it actually says what the answer claims. Step 4's response has no annotation at all, because there was no retrieval step; the model produced its best guess from general training patterns, which sounds equally confident but has no source you can point to and check."
+    },
+    {
+      "afterStep": 8,
+      "question": "Code Interpreter actually executed Python to compute the average resolution time from your CSV, rather than the model estimating it. Why does that distinction matter specifically for a number that might get quoted to a stakeholder later?",
+      "answer": "A model estimating an average from training patterns is doing pattern completion, not arithmetic — it can produce a plausible-looking number that doesn't match the actual data, and there's no way to reproduce or audit how it got there. Code Interpreter's sandboxed execution runs real code against the real uploaded file, so the result is deterministic and reproducible: rerunning the same code against the same CSV gives the same answer, which is the bar a number needs to clear before it's safe to repeat outside the lab."
+    }
+  ],
+  "validationChecklist": [
+    "Agent, Thread, and Run each printed a distinct, non-empty ID during step 3 — not a single combined object",
+    "Step 4's baseline answer to the policy question has an empty annotations list",
+    "Step 6's answer to the identical policy question includes at least one file_citation annotation pointing to a file uploaded in step 5",
+    "Step 8 produced a downloaded PNG chart file with values traceable to the uploaded CSV, not a model-estimated guess",
+    "A written three-row comparison exists covering no-tools / File Search / Code Interpreter for the same underlying question type"
+  ],
+  "cleanup": [
+    "Delete the vector store: `project_client.agents.vector_stores.delete(vector_store.id)`",
+    "Delete the uploaded policy docs and CSV file: `project_client.agents.files.delete(file_id)` for each of the three uploaded file IDs",
+    "Delete the agent: `project_client.agents.delete_agent(agent.id)`",
+    "Delete the four threads created in this lab (steps 3, 4, 6, 7): `project_client.agents.threads.delete(thread.id)` for each",
+    "Confirm no Code Interpreter session remains active by checking the Foundry portal's agent activity view — sessions auto-expire after a 1-hour active limit / 30-minute idle timeout regardless, but explicit deletion above stops any further charges immediately"
+  ],
+  "costEstimate": {
+    "tier": "low-cost",
+    "monthlyEstimateUSD": 3,
+    "freeTierNotes": "gpt-4o-mini token costs for this lab's handful of calls are a few cents. File Search's vector store storage bills at roughly $0.10/GB/day beyond the first 1GB free — the few KB of sample docs in this lab stay entirely within that free allowance, so storage costs $0. Code Interpreter is billed per session (roughly $0.03/session, each session active up to one hour) rather than per token — this lab creates 2-3 sessions, so budget well under $0.50 even running it multiple times. Unlike this domain's other two labs, this one is not fully covered by 'free' framing — it's a real, small, non-zero charge beyond the Azure free account's model-token credit, which is why this is tiered 'low-cost' rather than 'free.' Delete the vector store, uploaded files, and agent immediately after the lab (see cleanup) so nothing lingers billing."
+  },
+  "relatedExams": [
+    {
+      "exam": "ab731",
+      "domain": 2,
+      "why": "AB-731 Domain 2 (Microsoft AI Apps & Services) covers Azure AI Foundry Agent Service patterns — Agent/Thread/Run orchestration and built-in tools like File Search and Code Interpreter — which this lab exercises hands-on. It's also the direct hands-on companion to the Azure AI Foundry skill track's module 2 lesson (m2-l1) on this same object model, for learners working through that track."
+    }
+  ],
+  "relatedBlogPosts": [
+    {
+      "slug": "agents-are-a-new-execution-layer",
+      "why": "This lab is the concrete implementation of the post's core claim — the Thread/Run model literally builds a persistent execution layer instead of a stateless request/response cycle, which is the architectural shift the post argues most teams treat as 'just a feature' instead."
+    }
+  ],
+  "relatedUseCases": [
+    {
+      "id": "contract-redline-playbook-agent",
+      "vertical": "legal",
+      "why": "That use case's PlaybookRetrievalAgent runs RAG over a versioned legal playbook so every clause verdict cites a real source — this lab's File Search step demonstrates the exact same grounded-citation pattern at lab scale, before you'd build the production version described there."
+    },
+    {
+      "id": "incident-postmortem-synthesis",
+      "vertical": "technology",
+      "why": "That use case's parallel-subagent evidence pipeline is explicitly built on 'Azure AI Foundry agent framework' for orchestration — this lab is the prerequisite hands-on grounding in the Agent/Thread/Run primitives that kind of orchestration is built from."
+    }
+  ],
+  "relatedLabs": [
+    {
+      "id": "deploy-first-prompt-flow-azure-ai-foundry",
+      "relation": "alternative",
+      "why": "Both labs start from the same deployed Foundry model but diverge on architecture: Prompt Flow gives you a linear, versioned pipeline with variant comparison, while Agent Service gives you a stateful, tool-using conversation loop — the right choice depends on whether you need multi-turn state and tool calls or a single-shot templated call."
+    },
+    {
+      "id": "wire-content-safety-foundry-endpoint",
+      "relation": "next",
+      "why": "Once your agent can call File Search and Code Interpreter against real documents and data, wiring explicit Content Safety configuration on top of it is a natural next step — tool-augmented agents surface prompt-injection and unsafe-output risks that a bare chat endpoint doesn't have."
+    }
+  ],
+  "tags": [
+    "azure-ai-foundry",
+    "agent-service",
+    "threads-runs",
+    "file-search",
+    "code-interpreter"
+  ],
+  "publishedDate": "2026-09-10",
+  "updatedDate": "2026-09-10",
+  "taxonomyIds": [
+    "azure-ai-foundry",
+    "agent-service",
+    "threads-runs",
+    "file-search",
+    "code-interpreter"
+  ]
+}

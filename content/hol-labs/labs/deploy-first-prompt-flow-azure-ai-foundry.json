@@ -132,6 +132,11 @@
       "id": "wire-content-safety-foundry-endpoint",
       "relation": "next",
       "why": "Natural next step: add an explicit, configurable Content Safety layer to the endpoint you just deployed here, and see exactly what it adds over the default filter."
+    },
+    {
+      "id": "build-first-agent-foundry-agent-service",
+      "relation": "alternative",
+      "why": "Both labs start from the same deployed Foundry model but diverge on architecture: this lab gives you a linear, versioned pipeline with variant comparison, while Agent Service gives you a stateful, tool-using conversation loop — the right choice depends on whether you need multi-turn state and tool calls or a single-shot templated call."
     }
   ],
   "tags": [

@@ -4,7 +4,7 @@
     {
       "id": "azure-ai-foundry",
       "label": "Azure AI Foundry",
-      "count": 2
+      "count": 3
     },
     {
       "id": "github-copilot",
@@ -47,7 +47,8 @@
       "relatedUseCaseIds": [],
       "relatedBlogSlugs": [],
       "relatedLabIds": [
-        "wire-content-safety-foundry-endpoint"
+        "wire-content-safety-foundry-endpoint",
+        "build-first-agent-foundry-agent-service"
       ],
       "taxonomyIds": [
         "azure-ai-foundry",
@@ -76,7 +77,8 @@
       "relatedUseCaseIds": [],
       "relatedBlogSlugs": [],
       "relatedLabIds": [
-        "deploy-first-prompt-flow-azure-ai-foundry"
+        "deploy-first-prompt-flow-azure-ai-foundry",
+        "build-first-agent-foundry-agent-service"
       ],
       "taxonomyIds": [
         "azure-ai-foundry",
@@ -85,11 +87,49 @@
         "prompt-flow"
       ],
       "updatedDate": "2026-08-27"
+    },
+    {
+      "id": "build-first-agent-foundry-agent-service",
+      "title": "Build Your First Agent with Azure AI Foundry Agent Service",
+      "tagline": "Give a chat call a memory, a document library, and a Python sandbox — then watch the same question get answered three different ways.",
+      "domain": "azure-ai-foundry",
+      "difficulty": "intermediate",
+      "estimatedMinutes": 65,
+      "costTier": "low-cost",
+      "tags": [
+        "azure-ai-foundry",
+        "agent-service",
+        "threads-runs",
+        "file-search",
+        "code-interpreter"
+      ],
+      "relatedExamIds": [
+        "ab731"
+      ],
+      "relatedUseCaseIds": [
+        "contract-redline-playbook-agent",
+        "incident-postmortem-synthesis"
+      ],
+      "relatedBlogSlugs": [
+        "agents-are-a-new-execution-layer"
+      ],
+      "relatedLabIds": [
+        "deploy-first-prompt-flow-azure-ai-foundry",
+        "wire-content-safety-foundry-endpoint"
+      ],
+      "taxonomyIds": [
+        "azure-ai-foundry",
+        "agent-service",
+        "threads-runs",
+        "file-search",
+        "code-interpreter"
+      ],
+      "updatedDate": "2026-09-10"
     }
   ],
   "featuredIds": [
     "deploy-first-prompt-flow-azure-ai-foundry",
     "wire-content-safety-foundry-endpoint"
   ],
-  "totalCount": 2
+  "totalCount": 3
 }
