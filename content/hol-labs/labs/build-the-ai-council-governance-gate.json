@@ -1,0 +1,155 @@
+{
+  "id": "build-the-ai-council-governance-gate",
+  "schema": "hol-lab@1",
+  "title": "Build the AI Council Governance Gate: From Pilot to Production",
+  "tagline": "Northwind's pilot succeeded on paper — now write the roster, checklist, and gate criteria a real AI Council would actually need before anyone scales it.",
+  "domain": "ai-strategy-and-governance",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 85,
+  "problemStatement": "AB-731's Domain 3 teaches that AI rollouts fail on governance and culture gaps, not technology gaps — but the certification only tests that lesson via multiple-choice recall, e.g. 'what should happen before scaling beyond pilot?' with the answer 'AI Council reviews, Centre of Excellence validates technical standards.' A business leader can pick that answer correctly on exam day and still have never built an actual AI Council roster, scored a real use case against a real prioritization framework, or written a governance-gate checklist a build team could actually be held to. Northwind Retail Group — a 2,400-employee retailer that just finished a six-week M365 Copilot pilot with 50 users in customer support and legal, and whose steering committee has already approved scaling its support-email-triage classifier beyond that pilot — is exactly the situation where that gap becomes real: the decision to scale has been made, but none of the governance artifacts that decision depends on exist yet.",
+  "approachRationale": "The rejected alternative is letting IT ship the scaled classifier the moment it works technically, treating governance as a formality to backfill later if a regulator or an incident ever asks for it — this is precisely the 'AI failure root cause: culture and governance, not technology' trap the exam itself flags as wrong, and it repeats the exact mistake Northwind's own committee already rejected once (Q5's wrong answer: 'rollout can proceed immediately, since the pilot already proved the technology works'). A second rejected alternative, also drawn directly from the source material's own wrong answer, is waiting for a complete enterprise-wide AI strategy document before approving anything — over-engineering governance into paralysis is as wrong as skipping it. This lab takes the middle path the framework actually prescribes: write the specific, lightweight governance artifacts (council roster, policy checklist, prioritization score, approval-routing decision, technical gate, compliance pass) a real Council would produce at each real decision point, in the order a real rollout hits them.",
+  "mermaidDiagram": "flowchart TD\n    U[Use case proposed] --> VF{Value x Feasibility score}\n    VF -->|low feasibility| DEFER[Deferred: fix blocking prerequisite]\n    VF -->|quick win| SCOPE{Single-region or multinational?}\n    SCOPE -->|multinational| COMPLY[Data residency review 3.6b]\n    SCOPE -->|single region| COUNCIL[AI Council: strategy approval]\n    COMPLY --> COUNCIL\n    COUNCIL -->|approved| COE[CoE: technical governance gate]\n    COE -->|cleared| PROD[Production rollout]\n    COE -->|not cleared| FIX[Send back: fails build-quality check]\n    FIX --> COE\n    PROD --> MONITOR[Council ongoing monitoring]\n\n    style DEFER fill:#2a1a22,stroke:#fbbf24,color:#f5f5f5\n    style FIX fill:#2a1a22,stroke:#fbbf24,color:#f5f5f5\n    style COMPLY fill:#162236,stroke:#60a5fa,color:#f5f5f5\n    style COUNCIL fill:#1a2a42,stroke:#7c3aed,color:#f5f5f5\n    style COE fill:#1a2a42,stroke:#7c3aed,color:#f5f5f5\n    style PROD fill:#1a2a12,stroke:#34d399,color:#f5f5f5",
+  "mermaidDiagramCaption": "Feasibility gate, compliance branch, then Council and CoE approval",
+  "prerequisites": [
+    "Read (or work through) the AB-731 scenario 'Northwind's AI Steering Committee Sets Priorities' — this lab picks up exactly where its final question, on governance before scaling triage beyond pilot, leaves off",
+    "Familiarity with AB-731 Domain 3 concepts — AI Council, Centre of Excellence, the Value x Feasibility framework, and Microsoft's 6 Responsible AI principles — a read of the Domain 3 study notes is sufficient; no exam attempt required",
+    "A blank document or markdown file to draft each step's artifact in — no software beyond a text editor is required, and nothing in this lab touches a cloud console or runs any code"
+  ],
+  "learningObjectives": [
+    "Draft a cross-functional AI Council roster that satisfies the 'not IT-only' composition rule, with a defensible seat-by-seat rationale",
+    "Write a pre-deployment governance checklist (acceptable use, data handling, output review, incident response, audit trail) specific to a real use case rather than a generic template",
+    "Apply the Value x Feasibility framework to sequence competing AI investments and identify what would change a low-feasibility use case's quadrant",
+    "Distinguish which scaling decisions require full AI Council approval versus Centre of Excellence technical sign-off",
+    "Produce a technical governance-gate checklist that maps each build-quality check to one of Microsoft's 6 Responsible AI principles"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Draft Northwind's AI Council roster",
+      "instructions": "Northwind's committee has decided to scale support-email triage but has never formally constituted itself as a standing AI Council. Draft a roster of 5-6 seats for that Council, given Northwind's profile (2,400 employees, retail, customer support and legal both touched by the pilot). For each seat, name a role/title and write one line explaining why that function has to be represented — not just a list of departments.",
+      "whyItMatters": "Composition determines what risks even get raised before deployment: a council staffed only by IT would approve triage on schedule and technical grounds alone, and would have no seat whose job is to ask the fairness, workforce-impact, or conflict-of-interest questions HR, Legal, and an Ethics/Responsible-AI voice exist specifically to raise — the exact 'AI Council = IT only' trap the exam treats as the classic wrong answer.",
+      "expectedResult": "A completed roster listing each seat (e.g. Executive Sponsor/Chair, Business Unit Lead-Customer Ops, Business Unit Lead-Legal, HR, IT/Security, Ethics/Responsible-AI voice), a named role for each, and a one-line rationale tied to the cross-functional composition rule — explicitly noting that Priya Nair's seat as a business-unit voice does not substitute for the full Council's vote on scaling her own use case."
+    },
+    {
+      "order": 2,
+      "title": "Write Northwind's baseline governance checklist before scaling triage",
+      "instructions": "Before the triage classifier goes beyond its 50-user pilot to all support queues, write Northwind's governance checklist covering all five required areas: acceptable use policy, data handling policy, output review policy, incident response plan, and audit trail. For each, write one concrete rule specific to the triage classifier's six categories (Billing, Returns, Technical Issue, Shipping, Account Access, Escalation) — not a generic restatement of the category name.",
+      "whyItMatters": "Writing this checklist before scale, not after, is what separates a working pilot from a production-ready one: a policy introduced before rollout becomes how the tool was introduced in the first place, while a policy written after problems surface has to fight habits — like agents blindly trusting every auto-route — that have already formed.",
+      "expectedResult": "A five-item written governance checklist, each item paired with one concrete, triage-specific rule — for example, an output-review rule requiring human sign-off before auto-routing anything landing in the Escalation or Account Access categories, versus straight-through auto-routing for lower-risk categories."
+    },
+    {
+      "order": 3,
+      "title": "Score triage's scale-up and the Q&A tool with Value x Feasibility",
+      "instructions": "Re-score both candidate use cases now that the pilot has run: support-email triage scaling to all support queues, and the legal/HR document Q&A tool (still blocked on consolidating SharePoint, shared drives, and un-digitized paper archives). For each, assign a value and a feasibility rating (High/Medium/Low) with a one-line justification per axis, place both on the 2x2, and write a sequencing decision — what moves forward now, what's deferred, and what specific prerequisite would change the deferred item's quadrant.",
+      "whyItMatters": "Value x Feasibility isn't a one-time gate applied only at initial funding — it gets revisited at every stage transition, and naming exactly why something scores low feasibility (a fixable prep gap versus a structural one) is what turns a deferral into 'not yet, once X is done' instead of shelving it indefinitely.",
+      "expectedResult": "A completed 2x2 placement for both use cases with a justification per axis, plus a written sequencing decision: triage's scale-up proceeds now as a proven Quick Win, the Q&A tool is deferred pending document consolidation (owned by Legal), to be re-scored once that prerequisite clears."
+    },
+    {
+      "order": 4,
+      "title": "Decide what needs AI Council approval versus CoE-only sign-off",
+      "instructions": "List at least five concrete decisions involved in scaling triage beyond the 50-user pilot to all support queues — for example: expanding to full production volume, redefining or adding a category, changing the underlying model or vendor, scaling server capacity for 10x volume, and adding a new downstream capability like auto-drafted replies. For each, decide whether it needs full AI Council approval, CoE-only technical sign-off, or both in sequence, and write a one-line rationale for each call.",
+      "whyItMatters": "Conflating Council and CoE is the exam's classic trap for a reason: in practice it produces either a Council that rubber-stamps technical details it isn't equipped to judge, or a CoE that silently expands scope and risk decisions no one with strategy authority actually approved.",
+      "expectedResult": "A decision matrix of at least five specific scaling decisions, each labeled 'AI Council', 'CoE', or 'CoE then Council', with a rationale tied to the WHAT/SHOULD-we-do-it (Council) versus HOW-well-do-we-build-it (CoE) distinction — not assigned by guessing."
+    },
+    {
+      "order": 5,
+      "title": "Write the CoE's technical governance-gate checklist",
+      "instructions": "Write the checklist the Centre of Excellence must clear the triage classifier against before it touches production traffic at full volume. Write six items covering build quality and standards, and for each, name the specific Responsible AI principle (from Fairness, Reliability/Safety, Privacy/Security, Inclusiveness, Transparency, Accountability) or CoE function it satisfies.",
+      "whyItMatters": "This is the mechanical difference between the Council saying 'yes, scale it' and the classifier actually being ready: the Council approves the strategic decision, but nothing stops a technically unready build from going live unless a separate, technically competent gate enforces build quality against a written checklist rather than trusting the pilot's clean track record.",
+      "expectedResult": "A six-item technical gate checklist — for example, accuracy tested against a held-out labeled set (Reliability/Safety), error-rate parity checked across ticket sources or languages (Fairness), a confidence score returned with every classification (Transparency), tested resistance to crafted/adversarial email input attempting to force a category outside the intended six (Security), a logged human-override path for every auto-routed ticket (Accountability), and a documented, versioned build pattern the CoE can hand to the next department (reusable-asset-library function) — each item naming its specific principle or function, not a vague 'test it' bullet."
+    },
+    {
+      "order": 6,
+      "title": "Run a data-classification and compliance pass for a multinational rollout",
+      "instructions": "Shift scenario: a separate 2,000-employee professional-services firm with offices in Germany, the US, and Singapore is planning a Microsoft 365 Copilot rollout before its own AI Council will grant broad Microsoft Graph access. Produce a pre-approval compliance packet: a data-residency determination for the German office (which Azure region processes that data, and confirmation this is checked per-service rather than assumed blanket-compliant), at least three SharePoint data categories (e.g. HR records, client-privileged legal files, financial data) that need sensitivity labels or DLP before the Copilot feature is enabled, and a one-line answer to each item in the regulatory-review checklist: applicable regulations identified, data processing agreements reviewed, data minimization applied, retention/deletion policy set.",
+      "whyItMatters": "For a multinational rollout, the compliance review isn't a parallel workstream the Council can approve around — it changes the scope of what's actually being approved (which regions, which data, which user groups), so skipping it produces an approval that no longer matches what gets deployed.",
+      "expectedResult": "A completed compliance packet naming a specific data-residency determination for the German office, at least three data categories requiring classification/DLP before rollout, and a one-line answer to all four regulatory-review checklist items — stated explicitly as a precondition for, not parallel to, the Council's approval vote."
+    },
+    {
+      "order": 7,
+      "title": "Synthesize a reusable pilot-to-production governance gate",
+      "instructions": "Combine steps 1-6 into a single, reusable checklist of 5-7 lines that Northwind's Council could hand to the next business unit proposing a use case scale-up, without redoing this whole analysis from scratch. Each line should be traceable back to a specific earlier step (e.g. 'Council roster confirmed cross-functional — step 1' rather than a vague restatement).",
+      "whyItMatters": "This is the CoE's reusable-asset-library function in miniature: turning a one-off analysis into a repeatable artifact is what stops every future scale-up decision from re-deriving governance from first principles, the same logic that makes a documented build pattern more valuable than a one-off classifier nobody else can reuse.",
+      "expectedResult": "A single-page 'Pilot-to-Production Governance Gate' checklist with 5-7 line items, each traceable to a specific step in this lab, written generally enough for a different Northwind business unit to apply to its own use case."
+    },
+    {
+      "order": 8,
+      "title": "Run an incident-response tabletop against your own checklist",
+      "instructions": "Three months into full production, the triage classifier misroutes a support email describing a self-harm threat (an Escalation-category ticket) into the Returns queue, where it sits unactioned for two days until a customer follow-up call surfaces it. Using your step 2 incident-response plan and the Accountability principle, write the actual response: immediate containment, who is notified and on what timeline, who determines root cause, whether the classifier stays live for other categories or is fully rolled back, and whether this triggers an AI Council re-review before the rollout continues.",
+      "whyItMatters": "A governance checklist that's never stress-tested against a real failure mode is unverified — the value of writing an incident-response plan is proven by what it concretely tells you to do under pressure, not by having a policy document on file.",
+      "expectedResult": "A written incident timeline (containment, notification chain, root-cause accountability, continue-versus-rollback decision, and Council re-review trigger) that names a specific gap it exposes in the step 2 or step 5 checklist — for example, that Escalation was never actually held to the stricter human-review rule the checklist specified — rather than a generic 'we would investigate' answer."
+    }
+  ],
+  "conceptChecks": [
+    {
+      "afterStep": 1,
+      "question": "Northwind's CFO argues the Council doesn't need an HR seat because email triage doesn't touch employee data. Is the CFO right?",
+      "answer": "No. HR's seat isn't only about whether a use case touches HR-owned data — automating support triage changes work for the support agents themselves (job redesign, potential headcount shifts, reskilling needs), which is a workforce-impact and fairness question squarely in HR's lane. The composition rule exists precisely so business-impact perspectives outside IT and the requesting department aren't excluded just because a use case looks like 'just a technical classifier' on the surface."
+    },
+    {
+      "afterStep": 3,
+      "question": "If the legal team consolidates its scattered documents into a single SharePoint library next month, does the Q&A tool automatically become a Quick Win?",
+      "answer": "No. Consolidation raises the feasibility score, but value stays modest (roughly 15 queries/week) unless usage assumptions actually change — fixing one axis of the framework doesn't move the use case into the Quick Win quadrant on its own. The correct move is to re-score both axes with fresh numbers, not to assume solving the known blocker automatically clears the bar."
+    },
+    {
+      "afterStep": 4,
+      "question": "Marcus (IT Security) wants to add a new capability to the triage classifier: automatically drafting a reply for the Escalation category, not just routing it. Which body approves this, and why doesn't Marcus's own Council seat settle it?",
+      "answer": "This is an AI Council decision, not CoE's and not Marcus's individually. Auto-drafting replies is a materially new use case — it moves from classification to generative output, specifically for the highest-risk category — which changes the risk profile and the acceptable-use policy from step 2. Marcus's Council seat gives him a vote and a security perspective, not unilateral approval authority; that's the same conflict-of-interest logic that ruled out Priya self-approving the scale-up of her own use case."
+    },
+    {
+      "afterStep": 6,
+      "question": "The compliance review finds German employee data must stay in an EU Azure region, but the firm's existing Foundry deployment is in US East. Does the Council's earlier approval still stand?",
+      "answer": "No. The original approval was implicitly conditioned on the architecture and scope the Council was told about at the time. A residency finding that requires re-architecting where data is processed is a scope change to what's actually being deployed, so it has to go back through Council review — it can't be quietly patched by IT without the Council ever seeing the new configuration."
+    },
+    {
+      "afterStep": 8,
+      "question": "Priya proposes closing the incident by retraining the classifier on more Escalation examples and moving on. Is that sufficient closure under the Accountability principle?",
+      "answer": "No. Retraining might reduce the model's error rate, but it doesn't address the process gap that let a mislabeled Escalation ticket sit unreviewed for two days — if Escalation was supposed to require human sign-off per the step 2 checklist and didn't get it in practice, that's a process failure, not a model-accuracy failure. Accountability requires a human owns and fixes that specific process gap, with Council sign-off, before scaling continues — a model update alone doesn't close it."
+    }
+  ],
+  "validationChecklist": [
+    "The Council roster names 5-6 distinct seats including at minimum Legal, HR, IT/Security, and a non-Legal/HR/IT Ethics-or-Responsible-AI voice — not an IT-only list",
+    "The governance checklist covers all five §3.2 categories with a triage-specific rule for each, not a generic restatement of the category name",
+    "The Value x Feasibility scoring names an explicit prerequisite that would change the Q&A tool's quadrant, not just a static 'not now'",
+    "The step 4 decision matrix assigns each scaling decision to Council or CoE (or both) with a rationale tied to strategy-versus-build-quality, not assigned arbitrarily",
+    "The step 6 compliance packet states an actual data-residency determination for the German office, not a placeholder 'TBD'",
+    "The final governance-gate checklist's line items each trace back to a specific earlier step in this lab"
+  ],
+  "cleanup": [],
+  "costEstimate": {
+    "tier": "free",
+    "monthlyEstimateUSD": 0,
+    "freeTierNotes": "This is a paper/artifact exercise — no cloud resources, licences, or compute are created or consumed at any step. The only cost is the learner's time."
+  },
+  "relatedExams": [
+    {
+      "exam": "ab731",
+      "domain": 3,
+      "why": "This lab is the hands-on companion to AB-731 Domain 3 (Implementation & Adoption Strategy, 24% weight) — it makes the learner produce the actual AI Council roster, §3.2 governance checklist, Value x Feasibility scoring, Council-vs-CoE approval routing, and CoE technical gate that Domain 3 only tests via multiple-choice recall."
+    }
+  ],
+  "relatedBlogPosts": [
+    {
+      "slug": "guardrails-are-not-constraints",
+      "why": "The blog post's core argument — that AI failures start with good intentions and no guardrails, and that accountability is the real operating model — is exactly what this lab makes concrete by forcing the learner to write the guardrails (governance checklist, gate criteria, incident response plan) rather than just agreeing with the argument in the abstract."
+    }
+  ],
+  "relatedUseCases": [],
+  "relatedLabs": [
+    {
+      "id": "wire-content-safety-foundry-endpoint",
+      "relation": "next",
+      "why": "This lab's step 5 governance gate calls for a technical Security/Responsible-AI check on any customer-facing or adversarial-input surface; wiring an explicit Azure AI Content Safety layer is a concrete way a CoE would actually satisfy that check for a real endpoint, once the governance decision to build it has been made here."
+    }
+  ],
+  "tags": [
+    "ai-council",
+    "governance-gate",
+    "responsible-ai",
+    "value-feasibility",
+    "ab731",
+    "change-management"
+  ],
+  "publishedDate": "2026-09-11",
+  "updatedDate": "2026-09-11"
+}

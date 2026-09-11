@@ -25,6 +25,11 @@
       "id": "ai-engineering",
       "label": "AI Engineering",
       "count": 0
+    },
+    {
+      "id": "ai-strategy-and-governance",
+      "label": "AI Strategy & Governance",
+      "count": 1
     }
   ],
   "labs": [
@@ -125,11 +130,47 @@
         "code-interpreter"
       ],
       "updatedDate": "2026-09-10"
+    },
+    {
+      "id": "build-the-ai-council-governance-gate",
+      "title": "Build the AI Council Governance Gate: From Pilot to Production",
+      "tagline": "Northwind's pilot succeeded on paper — now write the roster, checklist, and gate criteria a real AI Council would actually need before anyone scales it.",
+      "domain": "ai-strategy-and-governance",
+      "difficulty": "intermediate",
+      "estimatedMinutes": 85,
+      "costTier": "free",
+      "tags": [
+        "ai-council",
+        "governance-gate",
+        "responsible-ai",
+        "value-feasibility",
+        "ab731",
+        "change-management"
+      ],
+      "relatedExamIds": [
+        "ab731"
+      ],
+      "relatedUseCaseIds": [],
+      "relatedBlogSlugs": [
+        "guardrails-are-not-constraints"
+      ],
+      "relatedLabIds": [
+        "wire-content-safety-foundry-endpoint"
+      ],
+      "taxonomyIds": [
+        "ai-council",
+        "governance-gate",
+        "responsible-ai",
+        "value-feasibility",
+        "ab731",
+        "change-management"
+      ],
+      "updatedDate": "2026-09-11"
     }
   ],
   "featuredIds": [
     "deploy-first-prompt-flow-azure-ai-foundry",
     "wire-content-safety-foundry-endpoint"
   ],
-  "totalCount": 3
+  "totalCount": 4
 }
